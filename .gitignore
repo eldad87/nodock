@@ -39,3 +39,4 @@ jspm_packages
 # Project Specific
 data
 ./docker-compose.override.yml
+.idea

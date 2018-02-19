@@ -7,9 +7,7 @@ RUN apt-get update &&\
 ARG NODE_ENV=production
 ARG NODE_VERSION=latest
 ARG PROJECT_PATH=/opt/app/
-ARG YARN=false
 
-ENV YARN=$YARN
 ENV PROJECT_PATH=$PROJECT_PATH
 ENV NODE_ENV=$NODE_ENV
 
@@ -20,17 +18,20 @@ RUN groupadd -r www-app &&\
 RUN mkdir -p /home/www-app &&\
     chmod 777 /home/www-app -R
 
+# Project folder
+RUN mkdir -p $PROJECT_PATH &&\
+    chown -R www-app:www-app $PROJECT_PATH
+
 # Install the specified NODE_VERSION or grab latest
 RUN n "$NODE_VERSION"
 
 # Install Yarn
+RUN npm install -g yarn
 
-RUN if [ ${YARN} = true ]; then \
-    npm install -g yarn \
-;fi
+# Install Nodemon
+COPY scripts/nodemon.json $PROJECT_PATH/
 
 COPY scripts/run-nodock.sh /usr/bin/run-nodock
-
 RUN chmod 700 /usr/bin/run-nodock
 
-WORKDIR /opt/app
+WORKDIR $PROJECT_PATH

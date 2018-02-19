@@ -1,5 +1,13 @@
-FROM redis:4.0
 
-COPY redis.conf /usr/local/etc/redis/redis.conf
+#++++++++++++++++++++++++++++++++++++++
+# Redis Docker container
+#++++++++++++++++++++++++++++++++++++++
+#
+# Official images:
+#
+#   redis - official Redis
+#           https://hub.docker.com/r/library/redis/
+#
+#++++++++++++++++++++++++++++++++++++++
 
-CMD [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+FROM redis

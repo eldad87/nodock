@@ -1,20 +1,27 @@
 version: '3.3'
 
 services:
-
+    #######################################
+    # Node.js
+    #######################################
     node:
         build:
             context: ./node
             args:
-                - NODE_VERSION=latest
+                - NODE_VERSION=8.9.4
                 - PROJECT_PATH=/opt/app/
-                - NODE_ENV=production
-                - YARN=false
+                - NODE_ENV=development
         volumes:
             - ../:/opt/app
-        entrypoint: run-nodock "node index.js"
+        entrypoint: run-nodock "yarn dev"
         tty: true
-
+        ports:
+            - "56745:56745"
+        links:
+            - mongo
+    #######################################
+    # MySQL
+    #######################################
     mysql:
         build:
             context: ./mysql
@@ -27,14 +34,25 @@ services:
             - ./data/mysql/:/var/lib/mysql
         expose:
             - "3306"
-
+    #######################################
+    # Mongo
+    #######################################
     mongo:
         build: ./mongo
         expose:
             - "27017"
         volumes:
             - ./data/mongo/:/var/lib/mongodb
-
+    #######################################
+    # Redis
+    #######################################
+    redis:
+        build: ./redis/
+        volumes:
+            - ./data/redis/:/data
+    #######################################
+    # Nginx
+    #######################################
     nginx:
         build:
             context: ./nginx
@@ -50,33 +68,22 @@ services:
             - "80:80"
             - "443:443"
         tty: true
-
-    apache:
-        build:
-            context: ./apache
-            args:
-                - WEB_REVERSE_PROXY_PORT=8000
-                - WEB_SSL=false
-                - SELF_SIGNED=false
-                - NO_DEFAULT=false
-        volumes:
-            - ./data/logs/apache/:/usr/local/apache2/logs
-            - ./certbot/certs/:/var/certs
-        ports:
-            - "80:80"
-            - "443:443"
-        tty: true
-
+        links:
+            - node
+    #######################################
+    # CertBot
+    #######################################
     certbot:
         build:
             context: ./certbot
         links:
-            - apache
             - nginx
         volumes:
           - ./certbot/letsencrypt/:/var/www/letsencrypt
           - ./certbot/certs/:/var/certs
-
+    #######################################
+    # RabbitMQ
+    #######################################
     rabbitmq:
         build:
             context: ./rabbitmq
@@ -87,7 +94,9 @@ services:
                 - RABBITMQ_DEFAULT_PASS=guest
         expose:
             - "5672"
-
+    #######################################
+    # WorkSpace
+    #######################################
     workspace:
         build:
             context: ./workspace
@@ -98,28 +107,3 @@ services:
             - nginx
         volumes:
             - ../:/opt/app
-
-    memcached:
-        build:
-            context: ./memcached
-        expose:
-            - "11211"
-
-    redis:
-        build:
-            context: ./redis
-        expose:
-            - "6379"
-        volumes:
-            - ./data/redis:/data
-
-    rethinkdb:
-        build:
-            context: ./rethinkdb
-        volumes:
-            - ./data/rethinkdb:/data
-        expose:
-            - "28015"
-            - "29015"
-        ports:
-            - "28080:8080"
